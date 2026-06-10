@@ -426,7 +426,7 @@
             <div class="nav-stats">
                 <span>掌握 <span id="total-mastered">0</span>/<span id="total-words">39</span></span>
                 <span>错题 <span id="total-wrong">0</span></span>
-                <button id="sync-btn" class="sync-btn">🔄 同步</button>
+                <button id="sync-btn" class="sync-btn">🔄 同步云端</button>
             </div>
         </div>
         <div class="tabs">
@@ -437,7 +437,7 @@
     </div>
 
     <div id="loading-page" class="loading">
-        <p>🔄 正在加载...</p>
+        <p>🔄 正在从云端加载数据...</p>
     </div>
 
     <div id="home-page" class="page hidden">
@@ -633,49 +633,15 @@
     </div>
 
     <script>
-        // 单词直接内置，不再请求外部words.json
-        const allWords = [
-            { en: "cooling system", cn: "冷却系统", color: "#3b82f6" },
-            { en: "lubrication system", cn: "润滑系统", color: "#22c55e" },
-            { en: "exhaust pipe", cn: "排气管", color: "#6b7280" },
-            { en: "turbocharge", cn: "涡轮增压器", color: "#a855f7" },
-            { en: "tappet", cn: "挺杆", color: "#eab308" },
-            { en: "rocker arm", cn: "摇臂", color: "#eab308" },
-            { en: "flywheel", cn: "飞轮", color: "#f97316" },
-            { en: "starting motor", cn: "启动马达", color: "#6366f1" },
-            { en: "generator", cn: "发电机", color: "#6366f1" },
-            { en: "Oil filter element", cn: "机油滤芯", color: "#22c55e" },
-            { en: "Fuel filter", cn: "燃油滤芯", color: "#ef4444" },
-            { en: "bumper", cn: "减震器", color: "#14b8a6" },
-            { en: "oil seal", cn: "油封", color: "#ec4899" },
-            { en: "nut", cn: "螺母", color: "#64748b" },
-            { en: "shim", cn: "垫片", color: "#64748b" },
-            { en: "bolt", cn: "螺栓", color: "#64748b" },
-            { en: "Engine cylinder block", cn: "发动机缸体", color: "#06b6d4" },
-            { en: "Fuel pump", cn: "燃油泵", color: "#ef4444" },
-            { en: "Camshaft", cn: "凸轮轴", color: "#eab308" },
-            { en: "Crank shaft", cn: "曲轴", color: "#f97316" },
-            { en: "air element", cn: "空气滤芯", color: "#a855f7" },
-            { en: "tube", cn: "硬管", color: "#78716c" },
-            { en: "hose", cn: "软管", color: "#78716c" },
-            { en: "oil cooler", cn: "机油冷却器", color: "#22c55e" },
-            { en: "radiator", cn: "散热器", color: "#3b82f6" },
-            { en: "cylinder head", cn: "缸盖", color: "#06b6d4" },
-            { en: "cylinder liner", cn: "缸套", color: "#06b6d4" },
-            { en: "piston rod", cn: "活塞杆", color: "#f97316" },
-            { en: "piston pin", cn: "活塞销", color: "#f97316" },
-            { en: "piston", cn: "活塞", color: "#f97316" },
-            { en: "oil pump", cn: "机油泵", color: "#22c55e" },
-            { en: "water pump", cn: "水泵", color: "#3b82f6" },
-            { en: "injector", cn: "喷油器", color: "#ef4444" },
-            { en: "torque converter", cn: "变矩器", color: "#8b5cf6" },
-            { en: "Transmission case", cn: "变速箱", color: "#8b5cf6" },
-            { en: "engine", cn: "发动机", color: "#10b981" },
-            { en: "fuel tank", cn: "燃油箱", color: "#ef4444" },
-            { en: "exhaust valve", cn: "排气门", color: "#eab308" },
-            { en: "intake valve", cn: "进气门", color: "#eab308" }
-        ];
+        // ============ 请修改这里 你的 GitHub 仓库信息 ============
+        const GITHUB_OWNER = "你的GitHub用户名";
+        const GITHUB_REPO = "你的仓库名";
+        const GITHUB_TOKEN = "你的GitHub个人访问令牌";
+        const FILE_PATH = "words.json";
+        // =======================================================
 
+        let allWords = [];
+        let fileSha = "";
         let masteredWords = JSON.parse(localStorage.getItem('masteredWords')) || [];
         let wrongWords = JSON.parse(localStorage.getItem('wrongWords')) || [];
         let currentQuestions = [];
@@ -691,27 +657,65 @@
         let selectedColor = '#3b82f6';
         let editingColor = null;
 
-        // 页面初始化，直接隐藏加载，显示首页（无网络请求）
+        // 从 GitHub 云端读取 words.json
+        async function loadCloudWords() {
+            try {
+                const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${FILE_PATH}`, {
+                    headers: {
+                        "Authorization": `token ${GITHUB_TOKEN}`,
+                        "Accept": "application/vnd.github.v3+json"
+                    }
+                });
+                const data = await res.json();
+                fileSha = data.sha;
+                const raw = atob(data.content);
+                allWords = JSON.parse(raw);
+                initPage();
+            } catch (e) {
+                alert("云端加载失败，使用本地缓存数据");
+                const local = localStorage.getItem("cloudWordsBackup");
+                allWords = local ? JSON.parse(local) : [];
+                initPage();
+            }
+        }
+
+        // 保存数据到 GitHub 云端
+        async function saveToCloud() {
+            const btn = document.getElementById("sync-btn");
+            btn.textContent = "同步中...";
+            btn.disabled = true;
+            try {
+                const content = btoa(JSON.stringify(allWords, null, 2));
+                await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${FILE_PATH}`, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": `token ${GITHUB_TOKEN}`,
+                        "Accept": "application/vnd.github.v3+json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: "自动更新单词数据",
+                        content: content,
+                        sha: fileSha
+                    })
+                });
+                localStorage.setItem("cloudWordsBackup", JSON.stringify(allWords));
+                alert("✅ 已同步到云端！");
+            } catch (e) {
+                alert("❌ 云端同步失败，请检查Token和仓库配置");
+            } finally {
+                btn.textContent = "🔄 同步云端";
+                btn.disabled = false;
+                loadCloudWords();
+            }
+        }
+
         function initPage() {
             document.getElementById('loading-page').classList.add('hidden');
             document.getElementById('home-page').classList.remove('hidden');
             updateStats();
         }
 
-        // 同步按钮（刷新本地单词列表）
-        document.getElementById('sync-btn').addEventListener('click', async () => {
-            const btn = document.getElementById('sync-btn');
-            btn.textContent = '同步中...';
-            btn.disabled = true;
-            renderWordbook();
-            renderWrongbook();
-            renderWordList();
-            btn.textContent = '🔄 同步';
-            btn.disabled = false;
-            alert('刷新完成！');
-        });
-
-        // 语音朗读
         function speak(text) {
             if ('speechSynthesis' in window) {
                 speechSynthesis.cancel();
@@ -722,7 +726,6 @@
             }
         }
 
-        // 更新统计数字
         function updateStats() {
             document.getElementById('total-mastered').textContent = masteredWords.length;
             document.getElementById('total-words').textContent = allWords.length;
@@ -731,7 +734,8 @@
             document.getElementById('home-progress').style.width = `${rate}%`;
         }
 
-        // 标签页切换
+        document.getElementById("sync-btn").addEventListener("click", saveToCloud);
+
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => {
@@ -742,24 +746,20 @@
                 btn.classList.add('active');
                 btn.style.background = '#6366f1';
                 btn.style.color = 'white';
-
                 const tab = btn.dataset.tab;
                 document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
                 document.getElementById(`${tab}-page`).classList.remove('hidden');
-
                 if (tab === 'wordbook') renderWordbook();
                 if (tab === 'wrongbook') renderWrongbook();
             });
         });
 
-        // 渲染单词卡片
         function renderWordbook(filter = 'all') {
             const grid = document.getElementById('wordbook-grid');
             grid.innerHTML = '';
             let showWords = [...allWords];
             if(filter === 'mastered') showWords = allWords.filter(w => masteredWords.includes(w.en));
             if(filter === 'unmastered') showWords = allWords.filter(w => !masteredWords.includes(w.en));
-
             showWords.forEach(word => {
                 const isM = masteredWords.includes(word.en);
                 const card = document.createElement('div');
@@ -780,7 +780,6 @@
                         </div>
                     </div>
                 `;
-                // 发音与翻转
                 card.querySelector('.card-front').addEventListener('click',e=>{
                     e.stopPropagation();
                     speak(word.en);
@@ -789,7 +788,6 @@
                 card.querySelector('.card-back').addEventListener('click',e=>{
                     if(!e.target.classList.contains('toggle-btn')) card.classList.remove('card-flipped');
                 });
-                // 标记掌握状态
                 card.querySelector('.toggle-btn').addEventListener('click',e=>{
                     e.stopPropagation();
                     if(masteredWords.includes(word.en)){
@@ -805,7 +803,6 @@
             });
         }
 
-        // 渲染错题本
         function renderWrongbook() {
             const emptyDom = document.getElementById('wrongbook-empty');
             const grid = document.getElementById('wrongbook-grid');
@@ -850,7 +847,6 @@
             });
         }
 
-        // 筛选按钮
         document.querySelectorAll('.filter-btn').forEach(btn=>{
             btn.addEventListener('click',()=>{
                 document.querySelectorAll('.filter-btn').forEach(b=>{
@@ -865,13 +861,10 @@
             });
         });
 
-        // 打开管理弹窗
         document.getElementById('manage-words-btn').addEventListener('click',()=>{
             document.getElementById('manage-modal').classList.remove('hidden');
             renderWordList();
         });
-
-        // 关闭弹窗
         document.getElementById('close-modal').addEventListener('click',()=>document.getElementById('manage-modal').classList.add('hidden'));
         document.getElementById('close-edit-modal').addEventListener('click',()=>document.getElementById('edit-modal').classList.add('hidden'));
         document.querySelectorAll('.modal').forEach(modal=>{
@@ -880,7 +873,7 @@
             });
         });
 
-        // 颜色点击绑定（添加区 + 编辑区分开独立）
+        // 颜色选择器（修复点击失效）
         document.querySelectorAll('#color-picker .color-option').forEach(opt=>{
             opt.addEventListener('click',()=>{
                 document.querySelectorAll('#color-picker .color-option').forEach(o=>o.classList.remove('selected'));
@@ -896,7 +889,6 @@
             });
         });
 
-        // 管理列表渲染
         function renderWordList(){
             const list = document.getElementById('word-list');
             list.innerHTML = '';
@@ -915,7 +907,6 @@
                 `;
                 list.appendChild(item);
             });
-            // 编辑按钮打开弹窗回填
             document.querySelectorAll('.edit-btn').forEach(btn=>{
                 btn.addEventListener('click',()=>{
                     editingWordIndex = Number(btn.dataset.index);
@@ -930,7 +921,6 @@
                     document.getElementById('edit-modal').classList.remove('hidden');
                 });
             });
-            // 删除单词
             document.querySelectorAll('.delete-btn').forEach(btn=>{
                 btn.addEventListener('click',()=>{
                     const idx = Number(btn.dataset.index);
@@ -941,9 +931,9 @@
                         wrongWords = wrongWords.filter(x=>x.en!==w.en);
                         localStorage.setItem('masteredWords',JSON.stringify(masteredWords));
                         localStorage.setItem('wrongWords',JSON.stringify(wrongWords));
-                        updateStats();
                         renderWordList();
                         renderWordbook();
+                        saveToCloud();
                     }
                 });
             });
@@ -967,10 +957,10 @@
             updateStats();
             renderWordList();
             renderWordbook();
-            alert('添加成功');
+            saveToCloud();
         });
 
-        // 保存编辑（修复颜色校验，必选颜色）
+        // 保存编辑
         document.getElementById('save-edit-btn').addEventListener('click',()=>{
             const en = document.getElementById('edit-word-en').value.trim();
             const cn = document.getElementById('edit-word-cn').value.trim();
@@ -980,7 +970,6 @@
             }
             const oldEn = allWords[editingWordIndex].en;
             allWords[editingWordIndex] = {en,cn,color:editingColor};
-            // 同步修改掌握、错题里的英文
             if(oldEn !== en){
                 masteredWords = masteredWords.map(x=>x===oldEn?en:x);
                 wrongWords = wrongWords.map(x=>x.en===oldEn?{...x,en,cn}:x);
@@ -992,7 +981,7 @@
             renderWordList();
             renderWordbook();
             renderWrongbook();
-            alert('修改成功');
+            saveToCloud();
         });
 
         // 刷题逻辑
@@ -1122,33 +1111,4 @@
         function updateHearts(){
             const box = document.getElementById('lesson-hearts');
             box.innerHTML = '';
-            for(let i=0;i<5;i++){
-                const span = document.createElement('span');
-                span.className = i<hearts ? 'heart' : 'heart heart-empty';
-                span.textContent = i<hearts ? '❤️' : '🤍';
-                box.appendChild(span);
-            }
-        }
-        function showPage(pageName){
-            speechSynthesis.cancel();
-            document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
-            document.getElementById(`${pageName}-page`).classList.remove('hidden');
-        }
-
-        // 页面按钮绑定
-        document.getElementById('start-btn').addEventListener('click',()=>startLesson(false));
-        document.getElementById('review-btn').addEventListener('click',()=>startLesson(true));
-        document.getElementById('test-wrong-btn').addEventListener('click',()=>startLesson(true));
-        document.getElementById('exit-btn').addEventListener('click',()=>confirm('确定退出？')&&showPage('home'));
-        document.getElementById('speak-btn').addEventListener('click',()=>currentWord&&speak(currentWord.en));
-        document.getElementById('continue-btn').addEventListener('click',nextQuestion);
-        document.getElementById('next-btn').addEventListener('click',()=>startLesson(false));
-        document.getElementById('home-btn').addEventListener('click',()=>showPage('home'));
-        document.getElementById('retry-btn').addEventListener('click',()=>startLesson(isReview));
-        document.getElementById('gameover-home-btn').addEventListener('click',()=>showPage('home'));
-
-        // 立刻初始化页面，无网络等待
-        initPage();
-    </script>
-</body>
-</html>
+            for(let
