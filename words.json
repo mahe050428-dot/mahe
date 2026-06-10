@@ -1,41 +1,197 @@
 [
-    {"en":"cooling system","cn":"冷却系统","color":"#3b82f6"},
-    {"en":"lubrication system","cn":"润滑系统","color":"#22c55e"},
-    {"en":"exhaust pipe","cn":"排气管","color":"#6b7280"},
-    {"en":"turbocharge","cn":"涡轮增压器","color":"#a855f7"},
-    {"en":"tappet","cn":"挺杆","color":"#eab308"},
-    {"en":"rocker arm","cn":"摇臂","color":"#eab308"},
-    {"en":"flywheel","cn":"飞轮","color":"#f97316"},
-    {"en":"starting motor","cn":"启动马达","color":"#6366f1"},
-    {"en":"generator","cn":"发电机","color":"#6366f1"},
-    {"en":"Oil filter element","cn":"机油滤芯","color":"#22c55e"},
-    {"en":"Fuel filter","cn":"燃油滤芯","color":"#ef4444"},
-    {"en":"bumper","cn":"减震器","color":"#14b8a6"},
-    {"en":"oil seal","cn":"油封","color":"#ec4899"},
-    {"en":"nut","cn":"螺母","color":"#64748b"},
-    {"en":"shim","cn":"垫片","color":"#64748b"},
-    {"en":"bolt","cn":"螺栓","color":"#64748b"},
-    {"en":"Engine cylinder block","cn":"发动机缸体","color":"#06b6d4"},
-    {"en":"Fuel pump","cn":"燃油泵","color":"#ef4444"},
-    {"en":"Camshaft","cn":"凸轮轴","color":"#eab308"},
-    {"en":"Crank shaft","cn":"曲轴","color":"#f97316"},
-    {"en":"air element","cn":"空气滤芯","color":"#a855f7"},
-    {"en":"tube","cn":"硬管","color":"#78716c"},
-    {"en":"hose","cn":"软管","color":"#78716c"},
-    {"en":"oil cooler","cn":"机油冷却器","color":"#22c55e"},
-    {"en":"radiator","cn":"散热器","color":"#3b82f6"},
-    {"en":"cylinder head","cn":"缸盖","color":"#06b6d4"},
-    {"en":"cylinder liner","cn":"缸套","color":"#06b6d4"},
-    {"en":"piston rod","cn":"活塞杆","color":"#f97316"},
-    {"en":"piston pin","cn":"活塞销","color":"#f97316"},
-    {"en":"piston","cn":"活塞","color":"#f97316"},
-    {"en":"oil pump","cn":"机油泵","color":"#22c55e"},
-    {"en":"water pump","cn":"水泵","color":"#3b82f6"},
-    {"en":"injector","cn":"喷油器","color":"#ef4444"},
-    {"en":"torque converter","cn":"变矩器","color":"#8b5cf6"},
-    {"en":"Transmission case","cn":"变速箱","color":"#8b5cf6"},
-    {"en":"engine","cn":"发动机","color":"#10b981"},
-    {"en":"fuel tank","cn":"燃油箱","color":"#ef4444"},
-    {"en":"exhaust valve","cn":"排气门","color":"#eab308"},
-    {"en":"intake valve","cn":"进气门","color":"#eab308"}
+    {
+        "en": "cooling system",
+        "cn": "冷却系统",
+        "color": "#3b82f6"
+    },
+    {
+        "en": "lubrication system",
+        "cn": "润滑系统",
+        "color": "#22c55e"
+    },
+    {
+        "en": "exhaust pipe",
+        "cn": "排气管",
+        "color": "#6b7280"
+    },
+    {
+        "en": "turbocharge",
+        "cn": "涡轮增压器",
+        "color": "#a855f7"
+    },
+    {
+        "en": "rod",
+        "cn": "挺杆",
+        "color": "#eab308"
+    },
+    {
+        "en": "rocker arm",
+        "cn": "摇臂",
+        "color": "#f97316"
+    },
+    {
+        "en": "flywheel",
+        "cn": "飞轮",
+        "color": "#ef4444"
+    },
+    {
+        "en": "Start the motor",
+        "cn": "启动马达",
+        "color": "#14b8a6"
+    },
+    {
+        "en": "generator",
+        "cn": "发电机",
+        "color": "#ec4899"
+    },
+    {
+        "en": "Oil filter element",
+        "cn": "机油滤芯",
+        "color": "#06b6d4"
+    },
+    {
+        "en": "Fuel filter",
+        "cn": "燃油滤芯",
+        "color": "#3b82f6"
+    },
+    {
+        "en": "bumper",
+        "cn": "减震器",
+        "color": "#22c55e"
+    },
+    {
+        "en": "oil seal",
+        "cn": "油封",
+        "color": "#6b7280"
+    },
+    {
+        "en": "nut",
+        "cn": "螺母",
+        "color": "#a855f7"
+    },
+    {
+        "en": "shim",
+        "cn": "垫片",
+        "color": "#eab308"
+    },
+    {
+        "en": "bolt",
+        "cn": "螺栓",
+        "color": "#f97316"
+    },
+    {
+        "en": "Engine cylinder block",
+        "cn": "发动机缸体",
+        "color": "#ef4444"
+    },
+    {
+        "en": "Fuel pump",
+        "cn": "燃油泵",
+        "color": "#14b8a6"
+    },
+    {
+        "en": "Camshaft",
+        "cn": "凸轮轴",
+        "color": "#ec4899"
+    },
+    {
+        "en": "Crank shaft",
+        "cn": "曲轴",
+        "color": "#06b6d4"
+    },
+    {
+        "en": "air relement",
+        "cn": "空气滤芯",
+        "color": "#3b82f6"
+    },
+    {
+        "en": "tube",
+        "cn": "硬管",
+        "color": "#22c55e"
+    },
+    {
+        "en": "hose",
+        "cn": "软管",
+        "color": "#6b7280"
+    },
+    {
+        "en": "oil cooler",
+        "cn": "机油冷却器",
+        "color": "#a855f7"
+    },
+    {
+        "en": "radiator",
+        "cn": "散热器",
+        "color": "#eab308"
+    },
+    {
+        "en": "cylinder head",
+        "cn": "缸盖",
+        "color": "#f97316"
+    },
+    {
+        "en": "cylinder liner",
+        "cn": "缸套",
+        "color": "#ef4444"
+    },
+    {
+        "en": "piston rod",
+        "cn": "活塞杆",
+        "color": "#14b8a6"
+    },
+    {
+        "en": "piston pin",
+        "cn": "活塞销",
+        "color": "#ec4899"
+    },
+    {
+        "en": "piston",
+        "cn": "活塞",
+        "color": "#06b6d4"
+    },
+    {
+        "en": "oil pump",
+        "cn": "机油泵",
+        "color": "#3b82f6"
+    },
+    {
+        "en": "water pump",
+        "cn": "水泵",
+        "color": "#22c55e"
+    },
+    {
+        "en": "injector",
+        "cn": "喷油器",
+        "color": "#6b7280"
+    },
+    {
+        "en": "torque converter",
+        "cn": "变矩器",
+        "color": "#a855f7"
+    },
+    {
+        "en": "Transmission",
+        "cn": "变速箱",
+        "color": "#eab308"
+    },
+    {
+        "en": "engine",
+        "cn": "发动机",
+        "color": "#f97316"
+    },
+    {
+        "en": "fuel tank",
+        "cn": "燃油箱",
+        "color": "#ef4444"
+    },
+    {
+        "en": "exhaust valve",
+        "cn": "排气门",
+        "color": "#14b8a6"
+    },
+    {
+        "en": "intake valve",
+        "cn": "进气门",
+        "color": "#ec4899"
+    }
 ]
