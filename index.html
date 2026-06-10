@@ -910,12 +910,20 @@
             });
         });
 
-        // 颜色选择器
+        // ========== 修复点：同时绑定【添加】和【编辑】两个颜色选择器点击事件 ==========
+        // 添加单词弹窗颜色
         document.querySelectorAll('#color-picker .color-option').forEach(option => {
             option.addEventListener('click', () => {
                 document.querySelectorAll('#color-picker .color-option').forEach(o => o.classList.remove('selected'));
                 option.classList.add('selected');
                 selectedColor = option.dataset.color;
+            });
+        });
+        // 编辑单词弹窗颜色（之前缺失这段，现在补上，可正常点击选中）
+        document.querySelectorAll('#edit-color-picker .color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('#edit-color-picker .color-option').forEach(o => o.classList.remove('selected'));
+                option.classList.add('selected');
             });
         });
 
@@ -949,6 +957,7 @@
                     document.getElementById('edit-word-en').value = word.en;
                     document.getElementById('edit-word-cn').value = word.cn;
                     
+                    // 打开编辑弹窗时自动匹配原有颜色并选中
                     document.querySelectorAll('#edit-color-picker .color-option').forEach(o => {
                         o.classList.remove('selected');
                         if (o.dataset.color === word.color) o.classList.add('selected');
@@ -1001,7 +1010,7 @@
             alert('添加成功！');
         });
 
-        // 保存编辑
+        // 保存编辑（修复校验：判断编辑区是否有选中颜色）
         document.getElementById('save-edit-btn').addEventListener('click', () => {
             const en = document.getElementById('edit-word-en').value.trim();
             const cn = document.getElementById('edit-word-cn').value.trim();
