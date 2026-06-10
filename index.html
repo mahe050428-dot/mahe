@@ -690,6 +690,8 @@
         let currentWord = null;
         let editingWordIndex = -1;
         let selectedColor = '#3b82f6';
+        // 新增：编辑弹窗专用颜色变量
+        let editingColor = null;
 
         // 从云端加载单词（简单版，无复杂错误处理）
         async function loadWords() {
@@ -910,7 +912,7 @@
             });
         });
 
-        // ========== 修复点：同时绑定【添加】和【编辑】两个颜色选择器点击事件 ==========
+        // ========== 修复点1：添加与编辑颜色选择器事件分离，分别绑定专属变量 ==========
         // 添加单词弹窗颜色
         document.querySelectorAll('#color-picker .color-option').forEach(option => {
             option.addEventListener('click', () => {
@@ -919,11 +921,13 @@
                 selectedColor = option.dataset.color;
             });
         });
-        // 编辑单词弹窗颜色（之前缺失这段，现在补上，可正常点击选中）
+        
+        // 编辑单词弹窗颜色（新增专用变量editingColor，点击时更新）
         document.querySelectorAll('#edit-color-picker .color-option').forEach(option => {
             option.addEventListener('click', () => {
                 document.querySelectorAll('#edit-color-picker .color-option').forEach(o => o.classList.remove('selected'));
                 option.classList.add('selected');
+                editingColor = option.dataset.color;
             });
         });
 
@@ -957,10 +961,13 @@
                     document.getElementById('edit-word-en').value = word.en;
                     document.getElementById('edit-word-cn').value = word.cn;
                     
-                    // 打开编辑弹窗时自动匹配原有颜色并选中
+                    // 修复点2：打开编辑弹窗时初始化颜色选中状态和变量
                     document.querySelectorAll('#edit-color-picker .color-option').forEach(o => {
                         o.classList.remove('selected');
-                        if (o.dataset.color === word.color) o.classList.add('selected');
+                        if (o.dataset.color === word.color) {
+                            o.classList.add('selected');
+                            editingColor = word.color; // 初始化编辑颜色变量
+                        }
                     });
                     
                     document.getElementById('edit-modal').classList.remove('hidden');
@@ -1010,21 +1017,29 @@
             alert('添加成功！');
         });
 
-        // 保存编辑（修复校验：判断编辑区是否有选中颜色）
+        // 修复点3：编辑保存逻辑使用专用变量editingColor，双重校验确保颜色有效
         document.getElementById('save-edit-btn').addEventListener('click', () => {
             const en = document.getElementById('edit-word-en').value.trim();
             const cn = document.getElementById('edit-word-cn').value.trim();
-            const colorOption = document.querySelector('#edit-color-picker .color-option.selected');
             
-            if (!en || !cn || !colorOption) {
-                alert('请填写完整信息');
+            // 1. 先检查是否有选中颜色
+            let colorOption = document.querySelector('#edit-color-picker .color-option.selected');
+            // 2. 同时检查专用变量是否有效（防止DOM查询异常）
+            if (!editingColor) {
+                // 变量为空时尝试从DOM获取
+                editingColor = colorOption ? colorOption.dataset.color : null;
+            }
+            
+            // 完整校验：英文、中文、颜色三者都必须有效
+            if (!en || !cn || !editingColor) {
+                alert('请填写完整信息（确保颜色已选择）');
                 return;
             }
             
-            const color = colorOption.dataset.color;
             const oldEn = allWords[editingWordIndex].en;
             
-            allWords[editingWordIndex] = { en, cn, color };
+            // 使用专用变量editingColor更新单词
+            allWords[editingWordIndex] = { en, cn, color: editingColor };
             
             if (oldEn !== en) {
                 masteredWords = masteredWords.map(w => w === oldEn ? en : w);
@@ -1221,12 +1236,4 @@
         document.getElementById('speak-btn').addEventListener('click', () => currentWord && speak(currentWord.en));
         document.getElementById('continue-btn').addEventListener('click', nextQuestion);
         document.getElementById('next-btn').addEventListener('click', () => startLesson(false));
-        document.getElementById('home-btn').addEventListener('click', () => showPage('home'));
-        document.getElementById('retry-btn').addEventListener('click', () => startLesson(isReview));
-        document.getElementById('gameover-home-btn').addEventListener('click', () => showPage('home'));
-
-        // 启动
-        loadWords();
-    </script>
-</body>
-</html>
+        document.getElementById('home-btn').addEventListener('click', () => showPage('home'))
