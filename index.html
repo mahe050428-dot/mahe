@@ -248,6 +248,7 @@
             gap: 8px;
             margin-bottom: 16px;
             align-items: center;
+            flex-wrap: wrap;
         }
         .filter-btn {
             padding: 4px 12px;
@@ -436,7 +437,7 @@
     </div>
 
     <div id="loading-page" class="loading">
-        <p>🔄 正在加载单词库...</p>
+        <p>🔄 正在加载...</p>
     </div>
 
     <div id="home-page" class="page hidden">
@@ -520,7 +521,7 @@
             </div>
 
             <button id="continue-btn" class="btn btn-gray" disabled>
-                按空格键继续
+                继续
             </button>
         </div>
     </div>
@@ -632,9 +633,48 @@
     </div>
 
     <script>
-        const GITHUB_USER = 'mahe050428-dot';
-        const GITHUB_REPO = 'mahe';
-        const GITHUB_BRANCH = 'main';
+        // 默认单词数据（备用）
+        const defaultWords = [
+            { en: "cooling system", cn: "冷却系统", color: "#3b82f6" },
+            { en: "lubrication system", cn: "润滑系统", color: "#22c55e" },
+            { en: "exhaust pipe", cn: "排气管", color: "#6b7280" },
+            { en: "turbocharge", cn: "涡轮增压器", color: "#a855f7" },
+            { en: "tappet", cn: "挺杆", color: "#eab308" },
+            { en: "rocker arm", cn: "摇臂", color: "#eab308" },
+            { en: "flywheel", cn: "飞轮", color: "#f97316" },
+            { en: "starting motor", cn: "启动马达", color: "#6366f1" },
+            { en: "generator", cn: "发电机", color: "#6366f1" },
+            { en: "Oil filter element", cn: "机油滤芯", color: "#22c55e" },
+            { en: "Fuel filter", cn: "燃油滤芯", color: "#ef4444" },
+            { en: "bumper", cn: "减震器", color: "#14b8a6" },
+            { en: "oil seal", cn: "油封", color: "#ec4899" },
+            { en: "nut", cn: "螺母", color: "#64748b" },
+            { en: "shim", cn: "垫片", color: "#64748b" },
+            { en: "bolt", cn: "螺栓", color: "#64748b" },
+            { en: "Engine cylinder block", cn: "发动机缸体", color: "#06b6d4" },
+            { en: "Fuel pump", cn: "燃油泵", color: "#ef4444" },
+            { en: "Camshaft", cn: "凸轮轴", color: "#eab308" },
+            { en: "Crank shaft", cn: "曲轴", color: "#f97316" },
+            { en: "air element", cn: "空气滤芯", color: "#a855f7" },
+            { en: "tube", cn: "硬管", color: "#78716c" },
+            { en: "hose", cn: "软管", color: "#78716c" },
+            { en: "oil cooler", cn: "机油冷却器", color: "#22c55e" },
+            { en: "radiator", cn: "散热器", color: "#3b82f6" },
+            { en: "cylinder head", cn: "缸盖", color: "#06b6d4" },
+            { en: "cylinder liner", cn: "缸套", color: "#06b6d4" },
+            { en: "piston rod", cn: "活塞杆", color: "#f97316" },
+            { en: "piston pin", cn: "活塞销", color: "#f97316" },
+            { en: "piston", cn: "活塞", color: "#f97316" },
+            { en: "oil pump", cn: "机油泵", color: "#22c55e" },
+            { en: "water pump", cn: "水泵", color: "#3b82f6" },
+            { en: "injector", cn: "喷油器", color: "#ef4444" },
+            { en: "torque converter", cn: "变矩器", color: "#8b5cf6" },
+            { en: "Transmission case", cn: "变速箱", color: "#8b5cf6" },
+            { en: "engine", cn: "发动机", color: "#10b981" },
+            { en: "fuel tank", cn: "燃油箱", color: "#ef4444" },
+            { en: "exhaust valve", cn: "排气门", color: "#eab308" },
+            { en: "intake valve", cn: "进气门", color: "#eab308" }
+        ];
 
         let allWords = [];
         let masteredWords = JSON.parse(localStorage.getItem('masteredWords')) || [];
@@ -651,22 +691,20 @@
         let editingWordIndex = -1;
         let selectedColor = '#3b82f6';
 
-        // 从云端加载单词
-        async function loadWordsFromCloud() {
+        // 从云端加载单词（简单版，无复杂错误处理）
+        async function loadWords() {
             try {
-                const response = await fetch(`words.json?t=${Date.now()}`);
-                if (!response.ok) throw new Error('加载失败');
-                return await response.json();
-            } catch (error) {
-                console.error('加载失败:', error);
-                alert('加载单词库失败，请点击右上角同步按钮重试');
-                return [];
+                const res = await fetch('words.json');
+                if (res.ok) {
+                    allWords = await res.json();
+                } else {
+                    allWords = [...defaultWords];
+                }
+            } catch (e) {
+                allWords = [...defaultWords];
             }
-        }
-
-        // 初始化
-        async function init() {
-            allWords = await loadWordsFromCloud();
+            
+            // 隐藏加载，显示首页
             document.getElementById('loading-page').classList.add('hidden');
             document.getElementById('home-page').classList.remove('hidden');
             updateStats();
@@ -678,8 +716,7 @@
             btn.textContent = '同步中...';
             btn.disabled = true;
             
-            allWords = await loadWordsFromCloud();
-            updateStats();
+            await loadWords();
             renderWordbook();
             renderWrongbook();
             
@@ -961,7 +998,7 @@
             updateStats();
             renderWordList();
             renderWordbook();
-            alert('添加成功！请点击右上角同步按钮保存到云端');
+            alert('添加成功！');
         });
 
         // 保存编辑
@@ -992,7 +1029,7 @@
             renderWordList();
             renderWordbook();
             renderWrongbook();
-            alert('修改成功！请点击右上角同步按钮保存到云端');
+            alert('修改成功！');
         });
 
         // 开始学习
@@ -1179,19 +1216,8 @@
         document.getElementById('retry-btn').addEventListener('click', () => startLesson(isReview));
         document.getElementById('gameover-home-btn').addEventListener('click', () => showPage('home'));
 
-        // 空格键
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                e.preventDefault();
-                const btn = document.getElementById('continue-btn');
-                if (!btn.disabled && !document.getElementById('lesson-page').classList.contains('hidden')) {
-                    nextQuestion();
-                }
-            }
-        });
-
         // 启动
-        init();
+        loadWords();
     </script>
 </body>
 </html>
