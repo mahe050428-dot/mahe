@@ -633,8 +633,8 @@
     </div>
 
     <script>
-        // 默认单词数据（备用）
-        const defaultWords = [
+        // 单词直接内置，不再请求外部words.json
+        const allWords = [
             { en: "cooling system", cn: "冷却系统", color: "#3b82f6" },
             { en: "lubrication system", cn: "润滑系统", color: "#22c55e" },
             { en: "exhaust pipe", cn: "排气管", color: "#6b7280" },
@@ -676,7 +676,6 @@
             { en: "intake valve", cn: "进气门", color: "#eab308" }
         ];
 
-        let allWords = [];
         let masteredWords = JSON.parse(localStorage.getItem('masteredWords')) || [];
         let wrongWords = JSON.parse(localStorage.getItem('wrongWords')) || [];
         let currentQuestions = [];
@@ -690,44 +689,29 @@
         let currentWord = null;
         let editingWordIndex = -1;
         let selectedColor = '#3b82f6';
-        // 新增：编辑弹窗专用颜色变量
         let editingColor = null;
 
-        // 从云端加载单词（简单版，无复杂错误处理）
-        async function loadWords() {
-            try {
-                const res = await fetch('words.json');
-                if (res.ok) {
-                    allWords = await res.json();
-                } else {
-                    allWords = [...defaultWords];
-                }
-            } catch (e) {
-                allWords = [...defaultWords];
-            }
-            
-            // 隐藏加载，显示首页
+        // 页面初始化，直接隐藏加载，显示首页（无网络请求）
+        function initPage() {
             document.getElementById('loading-page').classList.add('hidden');
             document.getElementById('home-page').classList.remove('hidden');
             updateStats();
         }
 
-        // 同步按钮
+        // 同步按钮（刷新本地单词列表）
         document.getElementById('sync-btn').addEventListener('click', async () => {
             const btn = document.getElementById('sync-btn');
             btn.textContent = '同步中...';
             btn.disabled = true;
-            
-            await loadWords();
             renderWordbook();
             renderWrongbook();
-            
+            renderWordList();
             btn.textContent = '🔄 同步';
             btn.disabled = false;
-            alert('同步完成！');
+            alert('刷新完成！');
         });
 
-        // iOS语音
+        // 语音朗读
         function speak(text) {
             if ('speechSynthesis' in window) {
                 speechSynthesis.cancel();
@@ -738,16 +722,16 @@
             }
         }
 
-        // 更新统计
+        // 更新统计数字
         function updateStats() {
             document.getElementById('total-mastered').textContent = masteredWords.length;
             document.getElementById('total-words').textContent = allWords.length;
             document.getElementById('total-wrong').textContent = wrongWords.length;
-            const p = allWords.length > 0 ? Math.round((masteredWords.length / allWords.length) * 100) : 0;
-            document.getElementById('home-progress').style.width = `${p}%`;
+            const rate = allWords.length > 0 ? Math.round((masteredWords.length / allWords.length) * 100) : 0;
+            document.getElementById('home-progress').style.width = `${rate}%`;
         }
 
-        // 标签切换
+        // 标签页切换
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => {
@@ -768,15 +752,15 @@
             });
         });
 
-        // 渲染单词本
+        // 渲染单词卡片
         function renderWordbook(filter = 'all') {
             const grid = document.getElementById('wordbook-grid');
             grid.innerHTML = '';
-            let words = allWords;
-            if (filter === 'mastered') words = allWords.filter(w => masteredWords.includes(w.en));
-            if (filter === 'unmastered') words = allWords.filter(w => !masteredWords.includes(w.en));
+            let showWords = [...allWords];
+            if(filter === 'mastered') showWords = allWords.filter(w => masteredWords.includes(w.en));
+            if(filter === 'unmastered') showWords = allWords.filter(w => !masteredWords.includes(w.en));
 
-            words.forEach(word => {
+            showWords.forEach(word => {
                 const isM = masteredWords.includes(word.en);
                 const card = document.createElement('div');
                 card.className = 'card-flip';
@@ -785,65 +769,63 @@
                         <div class="card-front" style="background: ${word.color}">
                             <div class="word-en">${word.en}</div>
                             <div class="small-text">点击发音</div>
-                            ${isM ? '<div style="position: absolute; top: 8px; right: 8px;">✅</div>' : ''}
+                            ${isM ? '<div style="position: absolute; top:8px;right:8px">✅</div>' : ''}
                         </div>
                         <div class="card-back">
                             <div class="word-cn">${word.cn}</div>
                             <div class="small-text">${word.en}</div>
-                            <button class="toggle-btn" style="margin-top: 12px; padding: 4px 12px; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; background: ${isM ? '#f3f4f6' : '#6366f1'}; color: ${isM ? '#374151' : 'white'};">
-                                ${isM ? '取消掌握' : '标记掌握'}
+                            <button class="toggle-btn" style="margin-top:12px;padding:4px 12px;border:none;border-radius:8px;font-size:12px;cursor:pointer;background:${isM?'#f3f4f6':'#6366f1'};color:${isM?'#374151':'white'}">
+                                ${isM?'取消掌握':'标记掌握'}
                             </button>
                         </div>
                     </div>
                 `;
-
-                card.querySelector('.card-front').addEventListener('click', (e) => {
+                // 发音与翻转
+                card.querySelector('.card-front').addEventListener('click',e=>{
                     e.stopPropagation();
                     speak(word.en);
-                    setTimeout(() => card.classList.add('card-flipped'), 300);
+                    setTimeout(()=>card.classList.add('card-flipped'),300);
                 });
-
-                card.querySelector('.card-back').addEventListener('click', (e) => {
-                    if (e.target.classList.contains('toggle-btn')) return;
-                    card.classList.remove('card-flipped');
+                card.querySelector('.card-back').addEventListener('click',e=>{
+                    if(!e.target.classList.contains('toggle-btn')) card.classList.remove('card-flipped');
                 });
-
-                card.querySelector('.toggle-btn').addEventListener('click', (e) => {
+                // 标记掌握状态
+                card.querySelector('.toggle-btn').addEventListener('click',e=>{
                     e.stopPropagation();
-                    masteredWords = masteredWords.includes(word.en) 
-                        ? masteredWords.filter(w => w !== word.en)
-                        : [...masteredWords, word.en];
-                    localStorage.setItem('masteredWords', JSON.stringify(masteredWords));
+                    if(masteredWords.includes(word.en)){
+                        masteredWords = masteredWords.filter(x=>x!==word.en);
+                    }else{
+                        masteredWords.push(word.en);
+                    }
+                    localStorage.setItem('masteredWords',JSON.stringify(masteredWords));
                     updateStats();
                     renderWordbook(filter);
                 });
-
                 grid.appendChild(card);
             });
         }
 
         // 渲染错题本
         function renderWrongbook() {
-            const empty = document.getElementById('wrongbook-empty');
+            const emptyDom = document.getElementById('wrongbook-empty');
             const grid = document.getElementById('wrongbook-grid');
-            if (wrongWords.length === 0) {
-                empty.classList.remove('hidden');
+            if(wrongWords.length === 0){
+                emptyDom.classList.remove('hidden');
                 grid.classList.add('hidden');
                 return;
             }
-            empty.classList.add('hidden');
+            emptyDom.classList.add('hidden');
             grid.classList.remove('hidden');
             grid.innerHTML = '';
-
-            wrongWords.forEach(word => {
+            wrongWords.forEach(word=>{
                 const card = document.createElement('div');
                 card.className = 'card-flip';
                 card.innerHTML = `
                     <div class="card-inner">
-                        <div class="card-front" style="background: #ef4444">
+                        <div class="card-front" style="background:#ef4444">
                             <div class="word-en">${word.en}</div>
                             <div class="small-text">点击发音</div>
-                            <button class="remove-btn" style="position: absolute; top: 8px; right: 8px; border: none; background: none; color: white; font-size: 16px; cursor: pointer;">✖️</button>
+                            <button class="remove-btn" style="position:absolute;top:8px;right:8px;border:none;background:none;color:white;font-size:16px;cursor:pointer">✖️</button>
                         </div>
                         <div class="card-back">
                             <div class="word-cn">${word.cn}</div>
@@ -851,92 +833,74 @@
                         </div>
                     </div>
                 `;
-
-                card.querySelector('.card-front').addEventListener('click', (e) => {
-                    if (e.target.closest('.remove-btn')) return;
-                    e.stopPropagation();
+                card.querySelector('.card-front').addEventListener('click',e=>{
+                    if(e.target.closest('.remove-btn')) return;
                     speak(word.en);
-                    setTimeout(() => card.classList.add('card-flipped'), 300);
+                    setTimeout(()=>card.classList.add('card-flipped'),300);
                 });
-
-                card.querySelector('.card-back').addEventListener('click', () => {
-                    card.classList.remove('card-flipped');
-                });
-
-                card.querySelector('.remove-btn').addEventListener('click', (e) => {
+                card.querySelector('.card-back').addEventListener('click',()=>card.classList.remove('card-flipped'));
+                card.querySelector('.remove-btn').addEventListener('click',e=>{
                     e.stopPropagation();
-                    wrongWords = wrongWords.filter(w => w.en !== word.en);
-                    localStorage.setItem('wrongWords', JSON.stringify(wrongWords));
+                    wrongWords = wrongWords.filter(w=>w.en !== word.en);
+                    localStorage.setItem('wrongWords',JSON.stringify(wrongWords));
                     updateStats();
                     renderWrongbook();
                 });
-
                 grid.appendChild(card);
             });
         }
 
         // 筛选按钮
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.filter-btn').forEach(b => {
+        document.querySelectorAll('.filter-btn').forEach(btn=>{
+            btn.addEventListener('click',()=>{
+                document.querySelectorAll('.filter-btn').forEach(b=>{
                     b.classList.remove('active');
-                    b.style.background = '#f3f4f6';
-                    b.style.color = '#374151';
+                    b.style.background='#f3f4f6';
+                    b.style.color='#374151';
                 });
                 btn.classList.add('active');
-                btn.style.background = '#6366f1';
-                btn.style.color = 'white';
+                btn.style.background='#6366f1';
+                btn.style.color='white';
                 renderWordbook(btn.dataset.filter);
             });
         });
 
-        // 打开管理模态框
-        document.getElementById('manage-words-btn').addEventListener('click', () => {
+        // 打开管理弹窗
+        document.getElementById('manage-words-btn').addEventListener('click',()=>{
             document.getElementById('manage-modal').classList.remove('hidden');
             renderWordList();
         });
 
-        // 关闭模态框
-        document.getElementById('close-modal').addEventListener('click', () => {
-            document.getElementById('manage-modal').classList.add('hidden');
-        });
-
-        document.getElementById('close-edit-modal').addEventListener('click', () => {
-            document.getElementById('edit-modal').classList.add('hidden');
-        });
-
-        // 点击外部关闭
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.classList.add('hidden');
+        // 关闭弹窗
+        document.getElementById('close-modal').addEventListener('click',()=>document.getElementById('manage-modal').classList.add('hidden'));
+        document.getElementById('close-edit-modal').addEventListener('click',()=>document.getElementById('edit-modal').classList.add('hidden'));
+        document.querySelectorAll('.modal').forEach(modal=>{
+            modal.addEventListener('click',e=>{
+                if(e.target === modal) modal.classList.add('hidden');
             });
         });
 
-        // ========== 修复点1：添加与编辑颜色选择器事件分离，分别绑定专属变量 ==========
-        // 添加单词弹窗颜色
-        document.querySelectorAll('#color-picker .color-option').forEach(option => {
-            option.addEventListener('click', () => {
-                document.querySelectorAll('#color-picker .color-option').forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
-                selectedColor = option.dataset.color;
+        // 颜色点击绑定（添加区 + 编辑区分开独立）
+        document.querySelectorAll('#color-picker .color-option').forEach(opt=>{
+            opt.addEventListener('click',()=>{
+                document.querySelectorAll('#color-picker .color-option').forEach(o=>o.classList.remove('selected'));
+                opt.classList.add('selected');
+                selectedColor = opt.dataset.color;
             });
         });
-        
-        // 编辑单词弹窗颜色（新增专用变量editingColor，点击时更新）
-        document.querySelectorAll('#edit-color-picker .color-option').forEach(option => {
-            option.addEventListener('click', () => {
-                document.querySelectorAll('#edit-color-picker .color-option').forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
-                editingColor = option.dataset.color;
+        document.querySelectorAll('#edit-color-picker .color-option').forEach(opt=>{
+            opt.addEventListener('click',()=>{
+                document.querySelectorAll('#edit-color-picker .color-option').forEach(o=>o.classList.remove('selected'));
+                opt.classList.add('selected');
+                editingColor = opt.dataset.color;
             });
         });
 
-        // 渲染单词列表
-        function renderWordList() {
+        // 管理列表渲染
+        function renderWordList(){
             const list = document.getElementById('word-list');
             list.innerHTML = '';
-            
-            allWords.forEach((word, index) => {
+            allWords.forEach((word,idx)=>{
                 const item = document.createElement('div');
                 item.className = 'word-item';
                 item.innerHTML = `
@@ -945,46 +909,38 @@
                         <div class="word-item-cn">${word.cn}</div>
                     </div>
                     <div class="word-actions">
-                        <button class="action-btn edit-btn" data-index="${index}">编辑</button>
-                        <button class="action-btn delete-btn" data-index="${index}">删除</button>
+                        <button class="action-btn edit-btn" data-index="${idx}">编辑</button>
+                        <button class="action-btn delete-btn" data-index="${idx}">删除</button>
                     </div>
                 `;
                 list.appendChild(item);
             });
-
-            // 编辑按钮
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    editingWordIndex = parseInt(btn.dataset.index);
-                    const word = allWords[editingWordIndex];
-                    
-                    document.getElementById('edit-word-en').value = word.en;
-                    document.getElementById('edit-word-cn').value = word.cn;
-                    
-                    // 修复点2：打开编辑弹窗时初始化颜色选中状态和变量
-                    document.querySelectorAll('#edit-color-picker .color-option').forEach(o => {
+            // 编辑按钮打开弹窗回填
+            document.querySelectorAll('.edit-btn').forEach(btn=>{
+                btn.addEventListener('click',()=>{
+                    editingWordIndex = Number(btn.dataset.index);
+                    const w = allWords[editingWordIndex];
+                    document.getElementById('edit-word-en').value = w.en;
+                    document.getElementById('edit-word-cn').value = w.cn;
+                    editingColor = w.color;
+                    document.querySelectorAll('#edit-color-picker .color-option').forEach(o=>{
                         o.classList.remove('selected');
-                        if (o.dataset.color === word.color) {
-                            o.classList.add('selected');
-                            editingColor = word.color; // 初始化编辑颜色变量
-                        }
+                        if(o.dataset.color === editingColor) o.classList.add('selected');
                     });
-                    
                     document.getElementById('edit-modal').classList.remove('hidden');
                 });
             });
-
-            // 删除按钮
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const index = parseInt(btn.dataset.index);
-                    const word = allWords[index];
-                    if (confirm(`确定删除"${word.en}"吗？`)) {
-                        allWords.splice(index, 1);
-                        masteredWords = masteredWords.filter(w => w !== word.en);
-                        wrongWords = wrongWords.filter(w => w.en !== word.en);
-                        localStorage.setItem('masteredWords', JSON.stringify(masteredWords));
-                        localStorage.setItem('wrongWords', JSON.stringify(wrongWords));
+            // 删除单词
+            document.querySelectorAll('.delete-btn').forEach(btn=>{
+                btn.addEventListener('click',()=>{
+                    const idx = Number(btn.dataset.index);
+                    const w = allWords[idx];
+                    if(confirm(`确定删除 ${w.en}？`)){
+                        allWords.splice(idx,1);
+                        masteredWords = masteredWords.filter(x=>x!==w.en);
+                        wrongWords = wrongWords.filter(x=>x.en!==w.en);
+                        localStorage.setItem('masteredWords',JSON.stringify(masteredWords));
+                        localStorage.setItem('wrongWords',JSON.stringify(wrongWords));
                         updateStats();
                         renderWordList();
                         renderWordbook();
@@ -994,246 +950,205 @@
         }
 
         // 添加单词
-        document.getElementById('add-word-btn').addEventListener('click', () => {
+        document.getElementById('add-word-btn').addEventListener('click',()=>{
             const en = document.getElementById('new-word-en').value.trim();
             const cn = document.getElementById('new-word-cn').value.trim();
-            
-            if (!en || !cn) {
+            if(!en || !cn){
                 alert('请填写完整信息');
                 return;
             }
-            
-            if (allWords.some(w => w.en.toLowerCase() === en.toLowerCase())) {
+            if(allWords.some(w=>w.en.toLowerCase() === en.toLowerCase())){
                 alert('单词已存在');
                 return;
             }
-            
-            allWords.push({ en, cn, color: selectedColor });
+            allWords.push({en,cn,color:selectedColor});
             document.getElementById('new-word-en').value = '';
             document.getElementById('new-word-cn').value = '';
             updateStats();
             renderWordList();
             renderWordbook();
-            alert('添加成功！');
+            alert('添加成功');
         });
 
-        // 修复点3：编辑保存逻辑使用专用变量editingColor，双重校验确保颜色有效
-        document.getElementById('save-edit-btn').addEventListener('click', () => {
+        // 保存编辑（修复颜色校验，必选颜色）
+        document.getElementById('save-edit-btn').addEventListener('click',()=>{
             const en = document.getElementById('edit-word-en').value.trim();
             const cn = document.getElementById('edit-word-cn').value.trim();
-            
-            // 1. 先检查是否有选中颜色
-            let colorOption = document.querySelector('#edit-color-picker .color-option.selected');
-            // 2. 同时检查专用变量是否有效（防止DOM查询异常）
-            if (!editingColor) {
-                // 变量为空时尝试从DOM获取
-                editingColor = colorOption ? colorOption.dataset.color : null;
-            }
-            
-            // 完整校验：英文、中文、颜色三者都必须有效
-            if (!en || !cn || !editingColor) {
-                alert('请填写完整信息（确保颜色已选择）');
+            if(!en || !cn || !editingColor){
+                alert('请填写完整信息（必须选择颜色）');
                 return;
             }
-            
             const oldEn = allWords[editingWordIndex].en;
-            
-            // 使用专用变量editingColor更新单词
-            allWords[editingWordIndex] = { en, cn, color: editingColor };
-            
-            if (oldEn !== en) {
-                masteredWords = masteredWords.map(w => w === oldEn ? en : w);
-                wrongWords = wrongWords.map(w => w.en === oldEn ? {...w, en, cn} : w);
-                localStorage.setItem('masteredWords', JSON.stringify(masteredWords));
-                localStorage.setItem('wrongWords', JSON.stringify(wrongWords));
+            allWords[editingWordIndex] = {en,cn,color:editingColor};
+            // 同步修改掌握、错题里的英文
+            if(oldEn !== en){
+                masteredWords = masteredWords.map(x=>x===oldEn?en:x);
+                wrongWords = wrongWords.map(x=>x.en===oldEn?{...x,en,cn}:x);
+                localStorage.setItem('masteredWords',JSON.stringify(masteredWords));
+                localStorage.setItem('wrongWords',JSON.stringify(wrongWords));
             }
-            
             document.getElementById('edit-modal').classList.add('hidden');
             updateStats();
             renderWordList();
             renderWordbook();
             renderWrongbook();
-            alert('修改成功！');
+            alert('修改成功');
         });
 
-        // 开始学习
-        function startLesson(review = false) {
-            isReview = review;
-            let words = review && wrongWords.length > 0 
-                ? [...wrongWords]
-                : allWords.filter(w => !masteredWords.includes(w.en)).length > 0
-                    ? allWords.filter(w => !masteredWords.includes(w.en))
-                    : [...allWords];
-
-            currentQuestions = [];
-            const shuffled = [...words].sort(() => 0.5 - Math.random());
-            for (let i = 0; i < Math.min(10, shuffled.length); i++) {
-                const w = shuffled[i];
-                const wrong = allWords.filter(x => x.cn !== w.cn).sort(() => 0.5 - Math.random()).slice(0, 3).map(x => x.cn);
-                const options = [w.cn, ...wrong].sort(() => 0.5 - Math.random());
-                currentQuestions.push({ word: w, options, correct: w.cn });
+        // 刷题逻辑
+        function startLesson(isReviewMode=false){
+            isReview = isReviewMode;
+            let pool;
+            if(isReview && wrongWords.length>0){
+                pool = [...wrongWords];
+            }else{
+                const unmaster = allWords.filter(w=>!masteredWords.includes(w.en));
+                pool = unmaster.length>0 ? unmaster : [...allWords];
             }
-
+            currentQuestions = [];
+            const shuffle = [...pool].sort(()=>Math.random()-0.5);
+            const take = Math.min(10,shuffle.length);
+            for(let i=0;i<take;i++){
+                const word = shuffle[i];
+                const otherAns = allWords.filter(x=>x.cn !== word.cn).sort(()=>Math.random()-0.5).slice(0,3).map(x=>x.cn);
+                const opts = [word.cn,...otherAns].sort(()=>Math.random()-0.5);
+                currentQuestions.push({word,options:opts,correct:word.cn});
+            }
             currentIndex = 0;
-            hearts = 5;
-            streak = 0;
-            maxStreak = 0;
-            correctCount = 0;
-            startTime = Date.now();
-
+            hearts =5;streak=0;maxStreak=0;correctCount=0;startTime=Date.now();
             showPage('lesson');
             updateHearts();
             showQuestion();
         }
-
-        // 显示题目
-        function showQuestion() {
+        function showQuestion(){
             const q = currentQuestions[currentIndex];
             currentWord = q.word;
-            document.getElementById('lesson-progress').style.width = `${(currentIndex / currentQuestions.length) * 100}%`;
+            document.getElementById('lesson-progress').style.width = `${(currentIndex/currentQuestions.length)*100}%`;
             document.getElementById('question-text').textContent = q.word.en;
-
-            const container = document.getElementById('options-container');
-            container.innerHTML = '';
-            q.options.forEach(opt => {
+            const optBox = document.getElementById('options-container');
+            optBox.innerHTML = '';
+            q.options.forEach(opt=>{
                 const btn = document.createElement('button');
                 btn.className = 'option-btn';
                 btn.textContent = opt;
                 btn.dataset.cn = opt;
-                btn.addEventListener('click', () => checkAnswer(opt, q.correct));
-                container.appendChild(btn);
+                btn.addEventListener('click',()=>checkAnswer(opt,q.correct));
+                optBox.appendChild(btn);
             });
-
             document.getElementById('feedback').classList.add('hidden');
-            document.getElementById('continue-btn').disabled = true;
-            document.getElementById('continue-btn').classList.remove('btn-primary');
-            document.getElementById('continue-btn').classList.add('btn-gray');
+            const contBtn = document.getElementById('continue-btn');
+            contBtn.disabled = true;
+            contBtn.classList.remove('btn-primary');
+            contBtn.classList.add('btn-gray');
         }
-
-        // 检查答案
-        function checkAnswer(selected, correct) {
+        function checkAnswer(selected,correct){
             const feedback = document.getElementById('feedback');
             const icon = document.getElementById('feedback-icon');
             const text = document.getElementById('feedback-text');
-            const continueBtn = document.getElementById('continue-btn');
-            const questionText = document.getElementById('question-text');
-
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                btn.disabled = true;
-                if (btn.dataset.cn === correct) btn.classList.add('correct');
-                else if (btn.dataset.cn === selected && selected !== correct) btn.classList.add('wrong');
+            const contBtn = document.getElementById('continue-btn');
+            const qText = document.getElementById('question-text');
+            document.querySelectorAll('.option-btn').forEach(b=>{
+                b.disabled = true;
+                if(b.dataset.cn === correct) b.classList.add('correct');
+                if(b.dataset.cn === selected && selected!==correct) b.classList.add('wrong');
             });
-
-            questionText.textContent = currentWord.cn;
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                const cn = btn.dataset.cn;
-                const en = allWords.find(w => w.cn === cn)?.en || '';
-                btn.innerHTML = `${cn}<br><span style="font-size: 12px; color: #6b7280;">${en}</span>`;
+            qText.textContent = currentWord.cn;
+            document.querySelectorAll('.option-btn').forEach(b=>{
+                const c = b.dataset.cn;
+                const e = allWords.find(x=>x.cn===c)?.en || '';
+                b.innerHTML = `${c}<br><span style="font-size:12px;color:#6b7280">${e}</span>`;
             });
-
             feedback.classList.remove('hidden');
-
-            if (selected === correct) {
+            if(selected === correct){
                 streak++;
-                maxStreak = Math.max(maxStreak, streak);
+                maxStreak = Math.max(maxStreak,streak);
                 correctCount++;
-
-                feedback.classList.add('feedback-success');
-                feedback.classList.remove('feedback-error');
+                feedback.className = 'feedback feedback-success';
                 icon.textContent = '✅';
                 text.textContent = '正确';
-                text.style.color = '#10b981';
-
-                if (streak % 5 === 0 && hearts < 5) {
+                text.style.color='#10b981';
+                if(streak%5===0 && hearts<5){
                     hearts++;
                     updateHearts();
                     text.textContent = '正确 +1❤️';
                 }
-
-                if (isReview) {
-                    wrongWords = wrongWords.filter(w => w.en !== currentWord.en);
-                    localStorage.setItem('wrongWords', JSON.stringify(wrongWords));
+                if(isReview){
+                    wrongWords = wrongWords.filter(w=>w.en !== currentWord.en);
+                    localStorage.setItem('wrongWords',JSON.stringify(wrongWords));
                     updateStats();
                 }
-            } else {
-                streak = 0;
+            }else{
+                streak=0;
                 hearts--;
                 updateHearts();
-
-                if (!wrongWords.some(w => w.en === currentWord.en)) {
+                if(!wrongWords.some(w=>w.en===currentWord.en)){
                     wrongWords.push(currentWord);
-                    localStorage.setItem('wrongWords', JSON.stringify(wrongWords));
+                    localStorage.setItem('wrongWords',JSON.stringify(wrongWords));
                     updateStats();
                 }
-
-                feedback.classList.add('feedback-error');
-                feedback.classList.remove('feedback-success');
+                feedback.className = 'feedback feedback-error';
                 icon.textContent = '❌';
                 text.textContent = '错误';
-                text.style.color = '#ef4444';
-
-                if (hearts <= 0) {
-                    setTimeout(() => showPage('gameover'), 1500);
+                text.style.color='#ef4444';
+                if(hearts <=0){
+                    setTimeout(()=>showPage('gameover'),1500);
                     return;
                 }
             }
-
-            continueBtn.disabled = false;
-            continueBtn.classList.remove('btn-gray');
-            continueBtn.classList.add('btn-primary');
+            contBtn.disabled = false;
+            contBtn.classList.remove('btn-gray');
+            contBtn.classList.add('btn-primary');
         }
-
-        // 下一题
-        function nextQuestion() {
+        function nextQuestion(){
             currentIndex++;
-            currentIndex >= currentQuestions.length ? completeLesson() : showQuestion();
+            if(currentIndex >= currentQuestions.length) completeLesson();
+            else showQuestion();
         }
-
-        // 完成关卡
-        function completeLesson() {
-            const time = Math.floor((Date.now() - startTime) / 1000);
-            const accuracy = Math.round((correctCount / currentQuestions.length) * 100);
-
-            if (accuracy === 100) {
-                currentQuestions.forEach(q => {
-                    if (!masteredWords.includes(q.word.en)) masteredWords.push(q.word.en);
+        function completeLesson(){
+            const sec = Math.floor((Date.now()-startTime)/1000);
+            const acc = Math.round((correctCount/currentQuestions.length)*100);
+            if(acc ===100){
+                currentQuestions.forEach(q=>{
+                    if(!masteredWords.includes(q.word.en)) masteredWords.push(q.word.en);
                 });
-                localStorage.setItem('masteredWords', JSON.stringify(masteredWords));
+                localStorage.setItem('masteredWords',JSON.stringify(masteredWords));
                 updateStats();
             }
-
-            document.getElementById('accuracy').textContent = `${accuracy}%`;
-            document.getElementById('time-spent').textContent = `${Math.floor(time/60)}分${time%60}秒`;
-            document.getElementById('max-streak').textContent = `${maxStreak}题`;
-
+            document.getElementById('accuracy').textContent = acc+'%';
+            document.getElementById('time-spent').textContent = `${Math.floor(sec/60)}分${sec%60}秒`;
+            document.getElementById('max-streak').textContent = maxStreak+'题';
             showPage('complete');
         }
-
-        // 更新生命值
-        function updateHearts() {
-            const container = document.getElementById('lesson-hearts');
-            container.innerHTML = '';
-            for (let i = 0; i < 5; i++) {
+        function updateHearts(){
+            const box = document.getElementById('lesson-hearts');
+            box.innerHTML = '';
+            for(let i=0;i<5;i++){
                 const span = document.createElement('span');
-                span.className = i < hearts ? 'heart' : 'heart heart-empty';
-                span.textContent = i < hearts ? '❤️' : '🤍';
-                container.appendChild(span);
+                span.className = i<hearts ? 'heart' : 'heart heart-empty';
+                span.textContent = i<hearts ? '❤️' : '🤍';
+                box.appendChild(span);
             }
         }
-
-        // 显示页面
-        function showPage(name) {
+        function showPage(pageName){
             speechSynthesis.cancel();
-            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-            document.getElementById(`${name}-page`).classList.remove('hidden');
+            document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+            document.getElementById(`${pageName}-page`).classList.remove('hidden');
         }
 
-        // 事件监听
-        document.getElementById('start-btn').addEventListener('click', () => startLesson(false));
-        document.getElementById('review-btn').addEventListener('click', () => startLesson(true));
-        document.getElementById('test-wrong-btn').addEventListener('click', () => startLesson(true));
-        document.getElementById('exit-btn').addEventListener('click', () => confirm('确定退出？') && showPage('home'));
-        document.getElementById('speak-btn').addEventListener('click', () => currentWord && speak(currentWord.en));
-        document.getElementById('continue-btn').addEventListener('click', nextQuestion);
-        document.getElementById('next-btn').addEventListener('click', () => startLesson(false));
-        document.getElementById('home-btn').addEventListener('click', () => showPage('home'))
+        // 页面按钮绑定
+        document.getElementById('start-btn').addEventListener('click',()=>startLesson(false));
+        document.getElementById('review-btn').addEventListener('click',()=>startLesson(true));
+        document.getElementById('test-wrong-btn').addEventListener('click',()=>startLesson(true));
+        document.getElementById('exit-btn').addEventListener('click',()=>confirm('确定退出？')&&showPage('home'));
+        document.getElementById('speak-btn').addEventListener('click',()=>currentWord&&speak(currentWord.en));
+        document.getElementById('continue-btn').addEventListener('click',nextQuestion);
+        document.getElementById('next-btn').addEventListener('click',()=>startLesson(false));
+        document.getElementById('home-btn').addEventListener('click',()=>showPage('home'));
+        document.getElementById('retry-btn').addEventListener('click',()=>startLesson(isReview));
+        document.getElementById('gameover-home-btn').addEventListener('click',()=>showPage('home'));
+
+        // 立刻初始化页面，无网络等待
+        initPage();
+    </script>
+</body>
+</html>
