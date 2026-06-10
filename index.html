@@ -270,7 +270,6 @@
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        /* 单词管理相关样式 */
         .manage-btn {
             margin-left: auto;
             padding: 4px 12px;
@@ -420,7 +419,6 @@
     </style>
 </head>
 <body>
-    <!-- 顶部导航 -->
     <div class="nav">
         <div class="nav-title">
             ⚙️ 发动机英语
@@ -437,12 +435,10 @@
         </div>
     </div>
 
-    <!-- 加载提示 -->
     <div id="loading-page" class="loading">
-        <p>🔄 正在同步云端单词库...</p>
+        <p>🔄 正在加载单词库...</p>
     </div>
 
-    <!-- 首页 -->
     <div id="home-page" class="page hidden">
         <div style="max-width: 400px; margin: 0 auto;">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;">
@@ -466,7 +462,6 @@
         </div>
     </div>
 
-    <!-- 单词本 -->
     <div id="wordbook-page" class="page hidden">
         <div class="filter-btns">
             <button class="filter-btn active" data-filter="all">全部</button>
@@ -477,7 +472,6 @@
         <div id="wordbook-grid" class="card-grid"></div>
     </div>
 
-    <!-- 错题本 -->
     <div id="wrongbook-page" class="page hidden">
         <button id="test-wrong-btn" class="btn btn-danger" style="margin-bottom: 24px;">
             📝 测试所有错题
@@ -490,7 +484,6 @@
         <div id="wrongbook-grid" class="card-grid hidden"></div>
     </div>
 
-    <!-- 学习界面 -->
     <div id="lesson-page" class="page hidden">
         <div style="background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); padding: 12px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
             <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -532,7 +525,6 @@
         </div>
     </div>
 
-    <!-- 完成界面 -->
     <div id="complete-page" class="page hidden">
         <div style="max-width: 350px; margin: 0 auto; text-align: center;">
             <div style="background: white; padding: 32px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 24px;">
@@ -553,7 +545,6 @@
         </div>
     </div>
 
-    <!-- 失败界面 -->
     <div id="gameover-page" class="page hidden">
         <div style="max-width: 350px; margin: 0 auto; text-align: center;">
             <div style="background: white; padding: 32px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 24px;">
@@ -566,7 +557,6 @@
         </div>
     </div>
 
-    <!-- 单词管理模态框 -->
     <div id="manage-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -574,7 +564,6 @@
                 <button class="close-btn" id="close-modal">&times;</button>
             </div>
             
-            <!-- 添加新单词表单 -->
             <div style="margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
                 <h4 style="font-size: 16px; font-weight: bold; margin-bottom: 12px;">添加新单词</h4>
                 <div class="form-group">
@@ -603,13 +592,11 @@
                 <button id="add-word-btn" class="btn btn-primary btn-small">添加单词</button>
             </div>
             
-            <!-- 现有单词列表 -->
             <h4 style="font-size: 16px; font-weight: bold; margin-bottom: 12px;">现有单词</h4>
             <div id="word-list" class="word-list"></div>
         </div>
     </div>
 
-    <!-- 编辑单词模态框 -->
     <div id="edit-modal" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
@@ -645,56 +632,10 @@
     </div>
 
     <script>
-        // ==================== 云端同步配置 ====================
-        // 替换成你的GitHub用户名和仓库名
         const GITHUB_USER = 'mahe050428-dot';
         const GITHUB_REPO = 'mahe';
         const GITHUB_BRANCH = 'main';
-        
-        // 默认单词数据
-        const defaultWords = [
-            { en: "cooling system", cn: "冷却系统", color: "#3b82f6" },
-            { en: "lubrication system", cn: "润滑系统", color: "#22c55e" },
-            { en: "exhaust pipe", cn: "排气管", color: "#6b7280" },
-            { en: "turbocharge", cn: "涡轮增压器", color: "#a855f7" },
-            { en: "tappet", cn: "挺杆", color: "#eab308" },
-            { en: "rocker arm", cn: "摇臂", color: "#eab308" },
-            { en: "flywheel", cn: "飞轮", color: "#f97316" },
-            { en: "starting motor", cn: "启动马达", color: "#6366f1" },
-            { en: "generator", cn: "发电机", color: "#6366f1" },
-            { en: "Oil filter element", cn: "机油滤芯", color: "#22c55e" },
-            { en: "Fuel filter", cn: "燃油滤芯", color: "#ef4444" },
-            { en: "bumper", cn: "减震器", color: "#14b8a6" },
-            { en: "oil seal", cn: "油封", color: "#ec4899" },
-            { en: "nut", cn: "螺母", color: "#64748b" },
-            { en: "shim", cn: "垫片", color: "#64748b" },
-            { en: "bolt", cn: "螺栓", color: "#64748b" },
-            { en: "Engine cylinder block", cn: "发动机缸体", color: "#06b6d4" },
-            { en: "Fuel pump", cn: "燃油泵", color: "#ef4444" },
-            { en: "Camshaft", cn: "凸轮轴", color: "#eab308" },
-            { en: "Crank shaft", cn: "曲轴", color: "#f97316" },
-            { en: "air element", cn: "空气滤芯", color: "#a855f7" },
-            { en: "tube", cn: "硬管", color: "#78716c" },
-            { en: "hose", cn: "软管", color: "#78716c" },
-            { en: "oil cooler", cn: "机油冷却器", color: "#22c55e" },
-            { en: "radiator", cn: "散热器", color: "#3b82f6" },
-            { en: "cylinder head", cn: "缸盖", color: "#06b6d4" },
-            { en: "cylinder liner", cn: "缸套", color: "#06b6d4" },
-            { en: "piston rod", cn: "活塞杆", color: "#f97316" },
-            { en: "piston pin", cn: "活塞销", color: "#f97316" },
-            { en: "piston", cn: "活塞", color: "#f97316" },
-            { en: "oil pump", cn: "机油泵", color: "#22c55e" },
-            { en: "water pump", cn: "水泵", color: "#3b82f6" },
-            { en: "injector", cn: "喷油器", color: "#ef4444" },
-            { en: "torque converter", cn: "变矩器", color: "#8b5cf6" },
-            { en: "Transmission case", cn: "变速箱", color: "#8b5cf6" },
-            { en: "engine", cn: "发动机", color: "#10b981" },
-            { en: "fuel tank", cn: "燃油箱", color: "#ef4444" },
-            { en: "exhaust valve", cn: "排气门", color: "#eab308" },
-            { en: "intake valve", cn: "进气门", color: "#eab308" }
-        ];
 
-        // 全局状态
         let allWords = [];
         let masteredWords = JSON.parse(localStorage.getItem('masteredWords')) || [];
         let wrongWords = JSON.parse(localStorage.getItem('wrongWords')) || [];
@@ -710,67 +651,31 @@
         let editingWordIndex = -1;
         let selectedColor = '#3b82f6';
 
-        // ==================== 云端同步函数 ====================
         // 从云端加载单词
         async function loadWordsFromCloud() {
             try {
-                const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/words.json`);
-                
-                if (response.status === 404) {
-                    // 如果文件不存在，创建初始文件
-                    await saveWordsToCloud(defaultWords);
-                    return [...defaultWords];
-                }
-                
-                const data = await response.json();
-                const content = atob(data.content);
-                return JSON.parse(content);
+                const response = await fetch(`words.json?t=${Date.now()}`);
+                if (!response.ok) throw new Error('加载失败');
+                return await response.json();
             } catch (error) {
-                console.error('加载云端单词失败，使用本地默认:', error);
-                return [...defaultWords];
+                console.error('加载失败:', error);
+                alert('加载单词库失败，请点击右上角同步按钮重试');
+                return [];
             }
         }
 
-        // 保存单词到云端
-        async function saveWordsToCloud(words) {
-            try {
-                // 先获取文件的sha（如果存在）
-                let sha = null;
-                try {
-                    const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/words.json`);
-                    const data = await response.json();
-                    sha = data.sha;
-                } catch (e) {
-                    // 文件不存在，sha为null
-                }
-
-                const content = btoa(JSON.stringify(words, null, 2));
-                
-                const response = await fetch(`https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/words.json`, {
-                    method: 'PUT',
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: '更新单词库',
-                        content: content,
-                        sha: sha,
-                        branch: GITHUB_BRANCH
-                    })
-                });
-
-                return response.ok;
-            } catch (error) {
-                console.error('保存到云端失败:', error);
-                return false;
-            }
+        // 初始化
+        async function init() {
+            allWords = await loadWordsFromCloud();
+            document.getElementById('loading-page').classList.add('hidden');
+            document.getElementById('home-page').classList.remove('hidden');
+            updateStats();
         }
 
-        // 同步按钮点击事件
+        // 同步按钮
         document.getElementById('sync-btn').addEventListener('click', async () => {
             const btn = document.getElementById('sync-btn');
-            btn.textContent = '🔄 同步中...';
+            btn.textContent = '同步中...';
             btn.disabled = true;
             
             allWords = await loadWordsFromCloud();
@@ -783,95 +688,7 @@
             alert('同步完成！');
         });
 
-        // ==================== 修复后的编辑功能 ====================
-        // 保存编辑
-        document.getElementById('save-edit-btn').addEventListener('click', async () => {
-            const en = document.getElementById('edit-word-en').value.trim();
-            const cn = document.getElementById('edit-word-cn').value.trim();
-            const colorOption = document.querySelector('#edit-color-picker .color-option.selected');
-            
-            if (!en || !cn || !colorOption) {
-                alert('请填写完整信息');
-                return;
-            }
-            
-            const color = colorOption.dataset.color;
-            const oldEn = allWords[editingWordIndex].en;
-            
-            // 更新单词
-            allWords[editingWordIndex] = { en, cn, color };
-            
-            // 同步更新已掌握和错题本
-            if (oldEn !== en) {
-                masteredWords = masteredWords.map(w => w === oldEn ? en : w);
-                wrongWords = wrongWords.map(w => w.en === oldEn ? {...w, en, cn} : w);
-            }
-            
-            // 保存到云端和本地
-            await saveWordsToCloud(allWords);
-            localStorage.setItem('masteredWords', JSON.stringify(masteredWords));
-            localStorage.setItem('wrongWords', JSON.stringify(wrongWords));
-            
-            updateStats();
-            document.getElementById('edit-modal').classList.add('hidden');
-            renderWordList();
-            renderWordbook();
-            renderWrongbook();
-            
-            alert('修改成功！');
-        });
-
-        // 添加新单词
-        document.getElementById('add-word-btn').addEventListener('click', async () => {
-            const en = document.getElementById('new-word-en').value.trim();
-            const cn = document.getElementById('new-word-cn').value.trim();
-            
-            if (!en || !cn) {
-                alert('请输入英文和中文');
-                return;
-            }
-            
-            if (allWords.some(w => w.en.toLowerCase() === en.toLowerCase())) {
-                alert('单词已存在');
-                return;
-            }
-            
-            allWords.push({ en, cn, color: selectedColor });
-            
-            // 保存到云端
-            await saveWordsToCloud(allWords);
-            
-            // 清空表单
-            document.getElementById('new-word-en').value = '';
-            document.getElementById('new-word-cn').value = '';
-            
-            updateStats();
-            renderWordList();
-            renderWordbook();
-            
-            alert('添加成功！');
-        });
-
-        // 删除单词
-        async function deleteWord(index) {
-            const wordToDelete = allWords[index];
-            if (!confirm(`确定删除"${wordToDelete.en}"吗？`)) return;
-            
-            allWords.splice(index, 1);
-            masteredWords = masteredWords.filter(w => w !== wordToDelete.en);
-            wrongWords = wrongWords.filter(w => w.en !== wordToDelete.en);
-            
-            await saveWordsToCloud(allWords);
-            localStorage.setItem('masteredWords', JSON.stringify(masteredWords));
-            localStorage.setItem('wrongWords', JSON.stringify(wrongWords));
-            
-            updateStats();
-            renderWordList();
-            renderWordbook();
-        }
-
-        // ==================== 原有功能（已修复） ====================
-        // iOS语音修复
+        // iOS语音
         function speak(text) {
             if ('speechSynthesis' in window) {
                 speechSynthesis.cancel();
@@ -954,11 +771,9 @@
 
                 card.querySelector('.toggle-btn').addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (masteredWords.includes(word.en)) {
-                        masteredWords = masteredWords.filter(w => w !== word.en);
-                    } else {
-                        masteredWords.push(word.en);
-                    }
+                    masteredWords = masteredWords.includes(word.en) 
+                        ? masteredWords.filter(w => w !== word.en)
+                        : [...masteredWords, word.en];
                     localStorage.setItem('masteredWords', JSON.stringify(masteredWords));
                     updateStats();
                     renderWordbook(filter);
@@ -1005,7 +820,7 @@
                     setTimeout(() => card.classList.add('card-flipped'), 300);
                 });
 
-                card.querySelector('.card-back').addEventListener('click', (e) => {
+                card.querySelector('.card-back').addEventListener('click', () => {
                     card.classList.remove('card-flipped');
                 });
 
@@ -1051,12 +866,10 @@
             document.getElementById('edit-modal').classList.add('hidden');
         });
 
-        // 点击模态框外部关闭
+        // 点击外部关闭
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.add('hidden');
-                }
+                if (e.target === modal) modal.classList.add('hidden');
             });
         });
 
@@ -1090,7 +903,7 @@
                 list.appendChild(item);
             });
 
-            // 编辑按钮事件
+            // 编辑按钮
             document.querySelectorAll('.edit-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     editingWordIndex = parseInt(btn.dataset.index);
@@ -1099,26 +912,88 @@
                     document.getElementById('edit-word-en').value = word.en;
                     document.getElementById('edit-word-cn').value = word.cn;
                     
-                    // 选中当前颜色
                     document.querySelectorAll('#edit-color-picker .color-option').forEach(o => {
                         o.classList.remove('selected');
-                        if (o.dataset.color === word.color) {
-                            o.classList.add('selected');
-                        }
+                        if (o.dataset.color === word.color) o.classList.add('selected');
                     });
                     
                     document.getElementById('edit-modal').classList.remove('hidden');
                 });
             });
 
-            // 删除按钮事件
+            // 删除按钮
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const index = parseInt(btn.dataset.index);
-                    deleteWord(index);
+                    const word = allWords[index];
+                    if (confirm(`确定删除"${word.en}"吗？`)) {
+                        allWords.splice(index, 1);
+                        masteredWords = masteredWords.filter(w => w !== word.en);
+                        wrongWords = wrongWords.filter(w => w.en !== word.en);
+                        localStorage.setItem('masteredWords', JSON.stringify(masteredWords));
+                        localStorage.setItem('wrongWords', JSON.stringify(wrongWords));
+                        updateStats();
+                        renderWordList();
+                        renderWordbook();
+                    }
                 });
             });
         }
+
+        // 添加单词
+        document.getElementById('add-word-btn').addEventListener('click', () => {
+            const en = document.getElementById('new-word-en').value.trim();
+            const cn = document.getElementById('new-word-cn').value.trim();
+            
+            if (!en || !cn) {
+                alert('请填写完整信息');
+                return;
+            }
+            
+            if (allWords.some(w => w.en.toLowerCase() === en.toLowerCase())) {
+                alert('单词已存在');
+                return;
+            }
+            
+            allWords.push({ en, cn, color: selectedColor });
+            document.getElementById('new-word-en').value = '';
+            document.getElementById('new-word-cn').value = '';
+            updateStats();
+            renderWordList();
+            renderWordbook();
+            alert('添加成功！请点击右上角同步按钮保存到云端');
+        });
+
+        // 保存编辑
+        document.getElementById('save-edit-btn').addEventListener('click', () => {
+            const en = document.getElementById('edit-word-en').value.trim();
+            const cn = document.getElementById('edit-word-cn').value.trim();
+            const colorOption = document.querySelector('#edit-color-picker .color-option.selected');
+            
+            if (!en || !cn || !colorOption) {
+                alert('请填写完整信息');
+                return;
+            }
+            
+            const color = colorOption.dataset.color;
+            const oldEn = allWords[editingWordIndex].en;
+            
+            allWords[editingWordIndex] = { en, cn, color };
+            
+            if (oldEn !== en) {
+                masteredWords = masteredWords.map(w => w === oldEn ? en : w);
+                wrongWords = wrongWords.map(w => w.en === oldEn ? {...w, en, cn} : w);
+                localStorage.setItem('masteredWords', JSON.stringify(masteredWords));
+                localStorage.setItem('wrongWords', JSON.stringify(wrongWords));
+            }
+            
+            document.getElementById('edit-modal').classList.add('hidden');
+            updateStats();
+            renderWordList();
+            renderWordbook();
+            renderWrongbook();
+            alert('修改成功！请点击右上角同步按钮保存到云端');
+        });
 
         // 开始学习
         function startLesson(review = false) {
@@ -1188,7 +1063,6 @@
                 else if (btn.dataset.cn === selected && selected !== correct) btn.classList.add('wrong');
             });
 
-            // 反转显示
             questionText.textContent = currentWord.cn;
             document.querySelectorAll('.option-btn').forEach(btn => {
                 const cn = btn.dataset.cn;
@@ -1250,4 +1124,74 @@
 
         // 下一题
         function nextQuestion() {
-           
+            currentIndex++;
+            currentIndex >= currentQuestions.length ? completeLesson() : showQuestion();
+        }
+
+        // 完成关卡
+        function completeLesson() {
+            const time = Math.floor((Date.now() - startTime) / 1000);
+            const accuracy = Math.round((correctCount / currentQuestions.length) * 100);
+
+            if (accuracy === 100) {
+                currentQuestions.forEach(q => {
+                    if (!masteredWords.includes(q.word.en)) masteredWords.push(q.word.en);
+                });
+                localStorage.setItem('masteredWords', JSON.stringify(masteredWords));
+                updateStats();
+            }
+
+            document.getElementById('accuracy').textContent = `${accuracy}%`;
+            document.getElementById('time-spent').textContent = `${Math.floor(time/60)}分${time%60}秒`;
+            document.getElementById('max-streak').textContent = `${maxStreak}题`;
+
+            showPage('complete');
+        }
+
+        // 更新生命值
+        function updateHearts() {
+            const container = document.getElementById('lesson-hearts');
+            container.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const span = document.createElement('span');
+                span.className = i < hearts ? 'heart' : 'heart heart-empty';
+                span.textContent = i < hearts ? '❤️' : '🤍';
+                container.appendChild(span);
+            }
+        }
+
+        // 显示页面
+        function showPage(name) {
+            speechSynthesis.cancel();
+            document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`${name}-page`).classList.remove('hidden');
+        }
+
+        // 事件监听
+        document.getElementById('start-btn').addEventListener('click', () => startLesson(false));
+        document.getElementById('review-btn').addEventListener('click', () => startLesson(true));
+        document.getElementById('test-wrong-btn').addEventListener('click', () => startLesson(true));
+        document.getElementById('exit-btn').addEventListener('click', () => confirm('确定退出？') && showPage('home'));
+        document.getElementById('speak-btn').addEventListener('click', () => currentWord && speak(currentWord.en));
+        document.getElementById('continue-btn').addEventListener('click', nextQuestion);
+        document.getElementById('next-btn').addEventListener('click', () => startLesson(false));
+        document.getElementById('home-btn').addEventListener('click', () => showPage('home'));
+        document.getElementById('retry-btn').addEventListener('click', () => startLesson(isReview));
+        document.getElementById('gameover-home-btn').addEventListener('click', () => showPage('home'));
+
+        // 空格键
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                const btn = document.getElementById('continue-btn');
+                if (!btn.disabled && !document.getElementById('lesson-page').classList.contains('hidden')) {
+                    nextQuestion();
+                }
+            }
+        });
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>
